@@ -1,0 +1,2 @@
+# LiveDisplay HAL
+/(vendor|system/vendor)/bin/hw/vendor\.ext\.livedisplay-service\.samsung-exynos    u:object_r:hal_ext_livedisplay_exynos_exec:s0

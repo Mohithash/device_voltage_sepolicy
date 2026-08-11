@@ -1,0 +1,7 @@
+# HALs — detection-free: no "lineage" in type/attribute names
+# Macro: attribute(hal_$1) so ext_livedisplay → hal_ext_livedisplay{,_client,_server}
+hal_attribute_ext(ext_health)
+hal_attribute_ext(ext_livedisplay)
+hal_attribute_ext(ext_touch)
+hal_attribute_ext(ext_powershare)
+hal_attribute_ext(ext_trust)

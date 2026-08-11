@@ -1,0 +1,4 @@
+# HwBinder IPC from client to server
+binder_call(hal_ext_powershare_client, hal_ext_powershare_server)
+
+hal_attribute_service(hal_ext_powershare, hal_ext_powershare_service)

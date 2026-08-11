@@ -1,0 +1,21 @@
+extglobalactions                      u:object_r:ext_globalactions_service:s0
+exthardware                           u:object_r:ext_hardware_service:s0
+exthealth                             u:object_r:ext_health_interface_service:s0
+extlivedisplay                        u:object_r:ext_livedisplay_service:s0
+exttrust                              u:object_r:ext_trust_service:s0
+profile                                   u:object_r:ext_profile_service:s0
+
+app_lock                                  u:object_r:app_lock_service:s0
+pocket                                    u:object_r:pocket_service:s0
+
+# Linearmotor Vibrator
+linearmotor                               u:object_r:linearmotor_vibrator_service:s0
+
+# Freeform
+lmo_freeform                              u:object_r:lmo_freeform_service:s0
+
+# Display Resolution Manager
+resolution_ext                            u:object_r:display_resolution_manager_service:s0
+
+# Refresh Rate Manager
+refresh_rate_ext                          u:object_r:refresh_rate_manager_service:s0

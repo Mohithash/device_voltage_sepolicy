@@ -1,0 +1,8 @@
+# LiveDisplay HAL
+/(vendor|system/vendor)/bin/hw/vendor\.ext\.livedisplay-service\.sdm          u:object_r:hal_ext_livedisplay_qti_exec:s0
+
+# Power
+/(vendor|system/vendor)/bin/hw/android\.hardware\.power-service-qti               u:object_r:hal_power_default_exec:s0
+/sys/devices(/platform)?/soc/[a-f0-9]+.qcom,mdss_mdp/idle_state                   u:object_r:sysfs_graphics:s0
+/sys/devices(/platform)?/soc/[a-f0-9]+.ufshc/clkgate_enable                       u:object_r:sysfs_scsi_host:s0
+/sys/devices/virtual/graphics/fb([0-3])+/idle_state                               u:object_r:sysfs_graphics:s0

@@ -1,0 +1,4 @@
+# HwBinder IPC from client to server
+binder_call(hal_ext_touch_client, hal_ext_touch_server)
+
+hal_attribute_service(hal_ext_touch, hal_ext_touch_service)

@@ -1,0 +1,71 @@
+# ATV
+# used by mediashell
+ro.odm.cast.ssid_suffix u:object_r:odm_cast_prop:s0
+
+# Aux camera
+vendor.camera.aux.packageexcludelist   u:object_r:vendor_persist_camera_prop:s0
+vendor.camera.aux.packagelist          u:object_r:vendor_persist_camera_prop:s0
+vendor.camera.skip_unconfigure.packagelist  u:object_r:vendor_persist_camera_prop:s0
+
+# Bluetooth
+bluetooth.hci.disabled_commands        u:object_r:bluetooth_config_prop:s0
+bluetooth.hci.erroneous_data_reporting.enabled        u:object_r:bluetooth_config_prop:s0
+
+# Dolby Properties
+ro.vendor.dolby.dax.version            u:object_r:exported_system_prop:s0
+ro.vendor.audio.dolby.dax.support      u:object_r:exported_system_prop:s0
+ro.vendor.audio.dolby.dax.version      u:object_r:exported_system_prop:s0
+ro.vendor.audio.dolby.surround.enable  u:object_r:exported_system_prop:s0
+
+# Custom version
+ro.voltage.device                      u:object_r:custom_version_prop:s0
+ro.voltage.build.version               u:object_r:custom_version_prop:s0
+ro.voltage.display.version             u:object_r:custom_version_prop:s0
+ro.voltage.version                     u:object_r:custom_version_prop:s0
+
+# Force multi-window behavior
+ro.config.force_multi_window           u:object_r:exported_config_prop:s0 exact bool
+
+# NFC
+persist.vendor.nfc.config_file_name    u:object_r:vendor_persist_nfc_prop:s0 exact string
+persist.vendor.nfc.fw_file_name        u:object_r:vendor_persist_nfc_prop:s0 exact string
+
+# Recovery battery
+ro.recovery.batteryless                u:object_r:recovery_config_prop:s0 exact bool
+
+# Recovery filesystem
+ro.recovery.supported_fs               u:object_r:recovery_config_prop:s0 exact string
+
+# Recovery input
+ro.minui.blacklist_input_devices       u:object_r:recovery_config_prop:s0
+
+# Recovery touch
+ro.minui.default_touch_rotation        u:object_r:recovery_config_prop:s0
+
+# Recovery update
+persist.vendor.recovery_update         u:object_r:recovery_update_prop:s0
+
+# Resolution switch
+ro.voltage.display.resolution_switch  u:object_r:exported_system_prop:s0
+
+# xtra-daemon control
+persist.sys.xtra-daemon.enabled        u:object_r:xtra_control_prop:s0 exact bool
+
+# Screen mirroring disablement
+persist.sysui.disable_mirroring_confirmation_dialog u:object_r:hdmi_config_prop:s0
+
+# USB
+ro.usb.uvc.disable_video_encode_flag   u:object_r:usb_uvc_config_prop:s0
+vendor.usb.uvc.payload_transfer_size   u:object_r:usb_uvc_config_prop:s0
+
+# Themed Bootanimation dynamic colors
+persist.bootanim.color1     u:object_r:bootanim_system_prop:s0
+persist.bootanim.color2     u:object_r:bootanim_system_prop:s0
+persist.bootanim.color3     u:object_r:bootanim_system_prop:s0
+persist.bootanim.color4     u:object_r:bootanim_system_prop:s0
+
+# Global cleartext feature
+persist.sys.global.cleartext           u:object_r:system_exported_cleartext_prop:s0 exact int
+
+# Compact HUN
+persist.sys.compact_heads_up_notification.always_show          u:object_r:system_prop:s0

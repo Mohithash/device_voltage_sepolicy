@@ -1,0 +1,20 @@
+type app_lock_service, system_api_service, system_server_service, service_manager_type;
+type ext_hardware_service, system_api_service, system_server_service, service_manager_type;
+type ext_health_interface_service, system_api_service, system_server_service, service_manager_type;
+type ext_globalactions_service, system_api_service, system_server_service, service_manager_type;
+type ext_livedisplay_service, system_api_service, system_server_service, service_manager_type;
+type ext_profile_service, system_api_service, system_server_service, service_manager_type;
+type ext_trust_service, system_api_service, system_server_service, service_manager_type;
+type pocket_service, system_api_service, system_server_service, service_manager_type;
+
+# Linearmotor Vibrator
+type linearmotor_vibrator_service, system_api_service, system_server_service, service_manager_type;
+
+# Freeform
+type lmo_freeform_service, system_api_service, system_server_service, service_manager_type;
+
+# Display Resolution Manager
+type display_resolution_manager_service, system_api_service, system_server_service, service_manager_type;
+
+# Refresh Rate Manager
+type refresh_rate_manager_service, system_api_service, system_server_service, service_manager_type;

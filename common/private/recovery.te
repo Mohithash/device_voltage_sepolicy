@@ -1,0 +1,31 @@
+recovery_only(`
+permissive recovery;
+
+# Custom version
+get_prop(recovery, custom_version_prop)
+
+# Minadbd networking support
+allow recovery node:tcp_socket node_bind;
+allow recovery port:tcp_socket name_bind;
+allow recovery self:tcp_socket { create_socket_perms_no_ioctl listen accept };
+allow recovery self:vsock_socket { create_socket_perms_no_ioctl listen accept };
+get_prop(recovery, adbd_config_prop)
+
+# Volume manager
+r_dir_file(recovery, sdcard_type)
+allow recovery block_device:dir create_dir_perms;
+allow recovery block_device:blk_file { create unlink rw_file_perms };
+allow recovery self:capability { mknod fsetid };
+allow recovery proc_filesystems:file r_file_perms;
+allow recovery self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
+allow recovery sysfs:file w_file_perms; # writing to /sys/*/uevent during coldboot.
+allow recovery tmpfs:file link;
+allow recovery rootfs:dir w_dir_perms;
+allow recovery rootfs:file { create_file_perms link };
+allow recovery media_rw_data_file:dir r_dir_perms;
+allow recovery sysfs_perdev_minors:file r_file_perms;
+allowxperm recovery block_device:blk_file ioctl { HDIO_GETGEO BLKGETSIZE };
+
+# Read fbe encryption info
+r_dir_file(recovery, unencrypted_data_file)
+')

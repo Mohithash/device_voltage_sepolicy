@@ -1,0 +1,4 @@
+# HwBinder IPC from client to server
+binder_call(hal_ext_health_client, hal_ext_health_server)
+
+hal_attribute_service(hal_ext_health, hal_ext_health_service)

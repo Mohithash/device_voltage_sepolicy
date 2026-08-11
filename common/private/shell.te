@@ -1,0 +1,4 @@
+get_prop(shell, custom_version_prop)
+
+# Custom ROM Hide
+allow shell adb_data_file:dir { search getattr };

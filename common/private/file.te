@@ -1,0 +1,5 @@
+type sdcard_posix, sdcard_type, sdcard_posix_contextmount_type, fs_type, mlstrustedobject;
+type sysfs_perdev_minors, fs_type, sysfs_type;
+
+# Pocket judge
+type pocket_judge_sysfs, fs_type, sysfs_type;
