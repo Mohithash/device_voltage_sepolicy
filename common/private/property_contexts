@@ -13,10 +13,8 @@ vendor.camera.aux.packagelist          u:object_r:camera2_extensions_prop:s0
 vendor.camera.skip_unconfigure.packagelist  u:object_r:camera2_extensions_prop:s0
 
 # Custom version
-ro.voltage.device                      u:object_r:custom_version_prop:s0
-ro.voltage.build.version               u:object_r:custom_version_prop:s0
-ro.voltage.display.version             u:object_r:custom_version_prop:s0
-ro.voltage.version                     u:object_r:custom_version_prop:s0
+ro.bestrom.device                      u:object_r:custom_version_prop:s0
+ro.bestrom.version                     u:object_r:custom_version_prop:s0
 
 # Dolby Properties
 ro.vendor.dolby.dax.version            u:object_r:exported_system_prop:s0
@@ -47,7 +45,7 @@ ro.minui.default_touch_rotation        u:object_r:recovery_config_prop:s0
 persist.vendor.recovery_update         u:object_r:recovery_update_prop:s0
 
 # Resolution switch
-ro.voltage.display.resolution_switch  u:object_r:exported_system_prop:s0
+ro.bestrom.display.resolution_switch  u:object_r:exported_system_prop:s0
 
 # xtra-daemon control
 persist.sys.xtra-daemon.enabled        u:object_r:xtra_control_prop:s0 exact bool
