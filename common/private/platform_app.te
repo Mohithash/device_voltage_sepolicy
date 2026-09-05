@@ -2,13 +2,13 @@
 allow platform_app nfc_service:service_manager find;
 
 # Allow LiveDisplay HAL service to be found
-hal_client_domain(platform_app, hal_lineage_livedisplay)
+hal_client_domain(platform_app, hal_bestrom_livedisplay)
 
 # Allow PowerShare HAL service to be found
-hal_client_domain(platform_app, hal_lineage_powershare)
+hal_client_domain(platform_app, hal_bestrom_powershare)
 
 # Allow Touch HAL service to be found
-hal_client_domain(platform_app, hal_lineage_touch)
+hal_client_domain(platform_app, hal_bestrom_touch)
 
 # Allow externalstorage access
 allow platform_app mnt_pass_through_file:dir { create_dir_perms mounton };

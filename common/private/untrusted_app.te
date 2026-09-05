@@ -1,4 +1,4 @@
-allow untrusted_app_all lineage_profile_service:service_manager find;
+allow untrusted_app_all bestrom_profile_service:service_manager find;
 
 # Custom ROM Hide
 allow untrusted_app_all custom_rom_hide_data_file:file { open read getattr };

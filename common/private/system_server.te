@@ -10,10 +10,10 @@ allow system_server tmpfs:file rw_file_perms;
 allow system_server zygote_tmpfs:file rw_file_perms;
 
 # Use HALs
-hal_client_domain(system_server, hal_lineage_health)
-hal_client_domain(system_server, hal_lineage_livedisplay)
-hal_client_domain(system_server, hal_lineage_touch)
-hal_client_domain(system_server, hal_lineage_powershare)
+hal_client_domain(system_server, hal_bestrom_health)
+hal_client_domain(system_server, hal_bestrom_livedisplay)
+hal_client_domain(system_server, hal_bestrom_touch)
+hal_client_domain(system_server, hal_bestrom_powershare)
 
 # Let system server find camera properties
 get_prop(system_server, camera2_extensions_prop)

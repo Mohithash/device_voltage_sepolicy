@@ -1,0 +1,4 @@
+# HwBinder IPC from client to server
+binder_call(hal_bestrom_health_client, hal_bestrom_health_server)
+
+hal_attribute_service(hal_bestrom_health, hal_bestrom_health_service)

@@ -1,4 +1,0 @@
-# HwBinder IPC from client to server
-binder_call(hal_lineage_touch_client, hal_lineage_touch_server)
-
-hal_attribute_service(hal_lineage_touch, hal_lineage_touch_service)

@@ -1,0 +1,4 @@
+# HwBinder IPC from client to server
+binder_call(hal_bestrom_touch_client, hal_bestrom_touch_server)
+
+hal_attribute_service(hal_bestrom_touch, hal_bestrom_touch_service)
