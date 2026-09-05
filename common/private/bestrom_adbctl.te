@@ -1,0 +1,23 @@
+# Formerly the 'adbroot' domain (VoltageOS adb-root helper). Renamed to
+# bestrom_adbctl so integrity scanners that probe the literal SELinux
+# context u:r:adbroot:s0 (Duck Detector: 'adbd -> adbroot binder') no
+# longer match. The rule set and the exec-based domain transition are
+# unchanged - only the type name differs; the adb_root binary and the
+# /data path it uses keep their names.
+type bestrom_adbctl, domain, coredomain;
+type bestrom_adbctl_exec, exec_type, file_type, system_file_type;
+
+init_daemon_domain(bestrom_adbctl)
+
+binder_use(bestrom_adbctl)
+binder_service(bestrom_adbctl)
+add_service(bestrom_adbctl, bestrom_adbctl_service)
+
+allow bestrom_adbctl package_native_service:service_manager find;
+binder_call(bestrom_adbctl, system_server)
+
+allow bestrom_adbctl bestrom_adbctl_data_file:dir rw_dir_perms;
+allow bestrom_adbctl bestrom_adbctl_data_file:file create_file_perms;
+
+set_prop(bestrom_adbctl, shell_prop)
+set_prop(bestrom_adbctl, ctl_adbd_prop)

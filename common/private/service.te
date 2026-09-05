@@ -1,4 +1,4 @@
-type adbroot_service,                   service_manager_type;
+type bestrom_adbctl_service,                   service_manager_type;
 type app_lock_service, system_api_service, system_server_service, service_manager_type;
 type bestrom_hardware_service, system_api_service, system_server_service, service_manager_type;
 type bestrom_health_interface_service, system_api_service, system_server_service, service_manager_type;

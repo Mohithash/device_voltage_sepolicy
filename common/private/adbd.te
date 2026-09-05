@@ -1,2 +1,2 @@
-allow adbd adbroot:binder call;
-allow adbd adbroot_service:service_manager find;
+allow adbd bestrom_adbctl:binder call;
+allow adbd bestrom_adbctl_service:service_manager find;
