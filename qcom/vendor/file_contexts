@@ -1,5 +1,5 @@
 # LiveDisplay HAL
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay-service\.sdm          u:object_r:hal_bestrom_livedisplay_qti_exec:s0
+/(vendor|system/vendor)/bin/hw/vendor\.bestrom\.livedisplay-service\.sdm          u:object_r:hal_bestrom_livedisplay_qti_exec:s0
 
 # Power
 /(vendor|system/vendor)/bin/hw/android\.hardware\.power-service-qti               u:object_r:hal_power_default_exec:s0
