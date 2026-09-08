@@ -1,0 +1,137 @@
+# Nullroute — the app domain.
+#
+# Placed from packages/apps/Nullroute/rom/sepolicy/nullroute_app.te.
+#
+# The app gets its own domain rather than running as priv_app, because the
+# alternative is granting priv_app access to nullroute_ctl_file — which would
+# hand the control page, and therefore the ability to disable filtering
+# device-wide, to every privileged app on the image.
+#
+# The app never sits in the DNS path. It is a compiler, a UI and a watchdog: it
+# fetches sources, builds an NRDX blob, verifies it, renames it into place and
+# release-stores a generation number. Everything below follows from that.
+
+type nullroute_app, domain, coredomain;
+app_domain(nullroute_app)
+net_domain(nullroute_app)
+
+###############################################################################
+# Framework surface
+###############################################################################
+
+allow nullroute_app app_api_service:service_manager find;
+allow nullroute_app system_api_service:service_manager find;
+
+# Private app storage. seapp_contexts assigns type=privapp_data_file, so this is
+# the app's own /data/user/0/com.bestrom.nullroute — where the CE-storage query
+# log lives.
+allow nullroute_app privapp_data_file:dir create_dir_perms;
+allow nullroute_app privapp_data_file:{ file lnk_file } create_file_perms;
+
+###############################################################################
+# The state root
+###############################################################################
+#
+# `map` is written out explicitly on every file rule, even where
+# create_file_perms / r_file_perms would already contain it. F1 was exactly this
+# permission going missing on exactly this app, on exactly the control page, and
+# the symptom was a device that looked healthy and enforced nothing.
+
+# /data -> /data/misc traversal. Reaching /data/misc at all also needs gid misc
+# at the DAC layer; see rom/nullroute-gid.xml.
+allow nullroute_app system_data_file:dir search;
+
+# index/ — the app is the writer. It builds staging.<gen>.nrdx, fsyncs, links
+# current -> previous, renames staging -> current, and unlinks old generations.
+# `rename` and `unlink` on the file plus add_name/remove_name on the dir are
+# what make the atomic swap in SPEC.md §6.3 possible.
+#
+# `link` is not optional and not decoration. core/Generation.kt publishes with
+# Files.createLink(previous, current) — a real hard link, in BOTH the promote and
+# the rollback path — and it wraps that call in runCatching { }.onFailure { Log.w }.
+# So without this permission the link fails EACCES, the failure is written to
+# logcat once and swallowed, previous.nrdx is never created, and the degradation
+# ladder in §6.3 quietly has nothing to fall back to. Everything else keeps
+# working. This is the F1 shape exactly: an omitted permission whose only symptom
+# is a recovery path that is not there on the day it is needed.
+allow nullroute_app nullroute_index_file:dir  { search open read getattr write add_name remove_name };
+allow nullroute_app nullroute_index_file:file { create open read write getattr setattr map lock rename link unlink };
+
+# ctl/ — THE F1 RULE. The app is the sole writer of cache line 0 and of the
+# 100000-byte uid_policy array at offset 4096, and it does that through a
+# MAP_SHARED PROT_READ|PROT_WRITE mapping. read + write + map, all three, or the
+# mapping fails EACCES and every pause and per-app policy write is discarded in
+# silence. The app does not create this file — nullroute_seed does, at the right
+# size and ownership, at post-fs-data.
+allow nullroute_app nullroute_ctl_file:dir  { search getattr };
+allow nullroute_app nullroute_ctl_file:file { open read write getattr map lock };
+
+# log/ — read-only, and mapped: RingReader walks the 4096-slot MPSC ring
+# through a PROT_READ mapping and detects torn records by sequence number.
+# No write: netd is the only producer, and an app that could write the ring
+# could forge query-log entries.
+allow nullroute_app nullroute_log_file:dir  { search getattr };
+allow nullroute_app nullroute_log_file:file { open read getattr map };
+
+# priv/ — the user's own rules, profile overlays and the fetched source cache.
+# netd has no access to this type at all; nothing here is needed to answer a
+# DNS query.
+allow nullroute_app nullroute_data_file:dir  { search open read getattr write add_name remove_name };
+allow nullroute_app nullroute_data_file:file { create open read write getattr setattr map lock rename unlink };
+
+###############################################################################
+# Baked data on /system_ext
+###############################################################################
+#
+# /system_ext/etc/nullroute/{baseline.domains.xz,neverblock.txt,profiles/*}.
+# Read-only by construction — it is on a verity-protected partition.
+allow nullroute_app system_file_type:dir  r_dir_perms;
+allow nullroute_app system_file_type:file r_file_perms;
+
+###############################################################################
+# Properties
+###############################################################################
+#
+# persist.sys.nullroute.mode is the on-disk source of truth for pause/enforce;
+# the control page's mode byte is derived from it. persist.sys.nullroute.kill is
+# the app-independent kill switch, and fail_streak is the boot-loop breaker the
+# HealthWatchdog clears after 120 s of healthy uptime.
+set_prop(nullroute_app, nullroute_prop)
+get_prop(nullroute_app, nullroute_prop)
+
+# sys.nullroute.filter is written by netd and is health signal #2 of three. The
+# app reads it and never writes it — a signal the app can forge is not a signal.
+get_prop(nullroute_app, nullroute_state_prop)
+
+###############################################################################
+# Deep mode — Phase 4 only
+###############################################################################
+#
+# A DNS-only VpnService with RFC 5737 in-tunnel aliases, reusing the same index
+# and the same NrQuery.cpp through JNI. Off by default on this ROM; it exists so
+# the APK works on stock Android and so Chromium's plaintext built-in resolver
+# is covered (F9, F12).
+#
+# NOTE: the spec draft named a `vpn_service` type here. There is no such type —
+# the service is `vpn_management_service`, which carries the app_api_service
+# attribute and is therefore already covered by the service_manager find above.
+# Writing the non-existent name would fail the policy build.
+allow nullroute_app self:tun_socket create_socket_perms;
+
+# The tun fd arrives already open from system_server; these are the perms
+# exercised on the descriptor itself. Possibly redundant with the appdomain
+# grants in system/sepolicy/private/app.te depending on the branch — a redundant
+# allow is inert, a missing one makes establish() return a descriptor the app
+# cannot read.
+allow nullroute_app tun_device:chr_file rw_file_perms;
+
+###############################################################################
+# NOT GRANTED
+###############################################################################
+#
+#   * dnsresolver_service:service_manager find — neverallow-guarded, and we
+#     deliberately never call setResolverConfiguration() or flushNetworkCache().
+#     See the third-rail block in nullroute.te.
+#   * any mounton on system_file_type — see the same block.
+#   * netd_service beyond what net_domain already provides. The app talks to
+#     netd only through ordinary DNS, like every other app.

@@ -1,0 +1,76 @@
+# Nullroute — the nrctl CLI.
+#
+# Placed from packages/apps/Nullroute/rom/sepolicy/nrctl.te.
+#
+# nrctl deliberately has NO domain of its own. It runs in whatever domain
+# invoked it:
+#
+#   * from init, as the `nullroute_syncprop` service, with an explicit
+#     `seclabel u:r:nullroute_seed:s0` — that is the only path that WRITES
+#     anything, and nullroute_seed.te already carries exactly the grant it needs
+#     (one byte into control.bin). The entrypoint rule for nrctl_exec lives
+#     there, next to the domain it belongs to.
+#   * from `adb shell`, in the shell domain, for the read-only verbs. Those
+#     verbs mmap the files directly rather than going through the app.
+#   * from `su` on a rooted build, which is unconfined and needs no rule.
+#
+# Mutating verbs invoked by a human (`nrctl mode paused`, `nrctl allow x.com`)
+# do NOT write anything from the CLI process. They send a broadcast to the app's
+# CtlReceiver, which gates on getSentFromUid() against {SHELL, ROOT, SYSTEM}
+# (F2). That is why shell needs no write access to any nullroute type and no
+# set_prop on a user build.
+
+type nrctl_exec, exec_type, file_type, system_file_type;
+
+# shell must be able to execute the binary in its own domain — nrctl_exec is a
+# distinct type, so shell's existing grants on system_file do not cover it, and
+# there is no domain_auto_trans because we do not want a second domain.
+allow shell nrctl_exec:file rx_file_perms;
+
+###############################################################################
+# Read-only diagnostics from a shell
+###############################################################################
+#
+# ⚠ DAC REACHES THESE FILES FIRST, and it is the LEAF directories that stop
+# shell, not /data/misc. /data/misc is 01771 (other has execute) and
+# /data/misc/nullroute is 0771, so uid 2000 traverses both fine; it is
+# index/ ctl/ log/ at 0770 system:misc that return EACCES, because shell is
+# neither uid system nor a member of gid misc. Getting that the right way round
+# matters: someone debugging "nrctl says unreadable" will otherwise go and change
+# the mode of the wrong directory.
+#
+# These rules are the MAC half; they become useful when the caller is root:
+#
+#   * userdebug/eng with `adb root` — adbd restarts as uid 0 and shell commands
+#     run as root in the shell domain. DAC is then bypassed and these rules are
+#     exactly what decides the outcome.
+#   * a user build with Magisk/KernelSU — su is unconfined and needs none of it.
+#
+# On a plain user build without root, `nrctl status` is expected to report
+# "state unreadable from this shell". That is correct behaviour, not a bug: the
+# app and the notification are the supported way to read state.
+allow shell { nullroute_index_file nullroute_ctl_file nullroute_log_file }:dir  { search getattr };
+allow shell { nullroute_index_file nullroute_ctl_file nullroute_log_file }:file { open read getattr map ioctl lock };
+allow shell system_data_file:dir search;
+
+# NOT granted: any access to nullroute_data_file. /data/misc/nullroute/priv
+# holds the user's own allow/deny rules and the fetched source cache. A shell
+# has no diagnostic need for it, and it is the one part of the state root that
+# is genuinely personal.
+
+###############################################################################
+# Properties
+###############################################################################
+
+# Reading is always available: `getprop sys.nullroute.filter` is the fastest way
+# to answer "is the hook alive?" and is step one of Spike 3 (SPEC.md §10.6).
+get_prop(shell, nullroute_prop)
+get_prop(shell, nullroute_state_prop)
+
+# Writing persist.sys.nullroute.* directly from a shell bypasses the app's
+# validation and its canary. It is a development affordance, so it is confined
+# to non-user builds; on a user build the broadcast path (which the CtlReceiver
+# gate already accepts from SHELL_UID) is the supported route.
+userdebug_or_eng(`
+  set_prop(shell, nullroute_prop)
+')

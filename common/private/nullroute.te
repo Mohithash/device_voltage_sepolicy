@@ -1,0 +1,163 @@
+# Nullroute — file types and the netd (resolver) side of the policy.
+#
+# Placed from packages/apps/Nullroute/rom/sepolicy/nullroute.te.
+# That directory is appended to SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS by
+# device/voltage/sepolicy/common/sepolicy.mk, which build/make/core/config.mk
+# includes automatically. A system app domain is a coredomain and MUST live
+# there; putting it in BOARD_VENDOR_SEPOLICY_DIRS produces a policy that builds
+# and then denies everything at runtime.
+#
+# WRITE THIS FILE BEFORE THE CODE. system/sepolicy/private/netd.te:225 carries
+#   dontaudit netd appdomain:unix_stream_socket { read write };
+# We do not use that socket, but the lesson stands: a missing grant in netd can
+# fail without an audit line, and a resolver that fails open looks identical
+# from userspace to one that is working.
+
+###############################################################################
+# Four types, not one. This is fix F1.
+###############################################################################
+#
+# The original design put control.bin under log/ with the log label, and granted
+# the app only { open read getattr map } on it — while the app is that file's
+# sole writer. mmap(PROT_WRITE) then fails EACCES, pause stops working, every
+# per-app policy write is silently discarded, and nothing in the UI can tell.
+#
+# Splitting the state root into four directories with four labels means the
+# permission each side needs is written out once, explicitly, in one place:
+#
+#   nullroute_index_file   /data/misc/nullroute/index   app rw   netd ro + map
+#   nullroute_ctl_file     /data/misc/nullroute/ctl     app rw   netd rw + map
+#   nullroute_log_file     /data/misc/nullroute/log     app ro   netd rw + map
+#   nullroute_data_file    /data/misc/nullroute/priv    app rw   netd NOTHING
+#
+# `map` is spelled out on every single file rule below even where the r_/w_
+# macros would already include it. That redundancy is the point: F1 was an
+# omission that nobody could see, and a reviewer scanning for the word `map`
+# should find it on every rule that backs an mmap.
+
+# mlstrustedobject is on all four types, and it is not optional here.
+#
+# The app runs with levelFrom=all (rom/sepolicy/seapp_contexts.frag), so its
+# process level is s0:c<appid>,c<user> while these files are plain s0. The MLS
+# constraints in system/sepolicy/private/mls then deny every write, setattr,
+# rename, link and unlink the app makes under /data/misc/nullroute, because
+# l1 != l2 and none of the exemptions apply — and they do it through the
+# constraint, not through a missing allow rule, so the allow rules below all
+# look correct and the audit line points at a permission that is granted. It is
+# F1 again, arriving through a door the policy never looks at: mmap(PROT_WRITE)
+# on control.bin fails, pause and every per-app policy write are discarded, and
+# the index is never published. The mirror image is just as bad — a file the app
+# does manage to create carries the app's categories, netd runs at plain s0, and
+# netd's read is denied instead, which is a fail-open filter.
+#
+# ota_package_file (system/sepolicy/public/file.te:370) and wm_trace_data_file
+# carry the same attribute for the same reason: a /data file written by a
+# categorised app domain and read by an uncategorised system one.
+#
+# Do NOT reach for mlstrustedsubject on nullroute_app instead. The neverallow in
+# system/sepolicy/private/mlstrustedsubject.te forbids an mlstrustedsubject from
+# creating, renaming or unlinking privapp_data_file, which nullroute_app does,
+# so the policy would stop building.
+type nullroute_index_file, file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type nullroute_ctl_file,   file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type nullroute_log_file,   file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type nullroute_data_file,  file_type, data_file_type, core_data_file_type, mlstrustedobject;
+
+###############################################################################
+# Properties
+###############################################################################
+#
+# nullroute_prop and nullroute_state_prop are declared in property.frag, which
+# is appended to device/voltage/sepolicy/common/private/property.te. They are
+# NOT declared here — a property type declared twice fails the policy build, and
+# property types belong next to the rest of the tree's property types where a
+# maintainer will find them.
+
+###############################################################################
+# netd — the resolver runs inside it
+###############################################################################
+#
+# system/netd/server/main.cpp calls initDnsResolver(), which dlopen()s
+# libnetd_resolv out of the com.android.tethering APEX into netd's own address
+# space. There is no separate resolver process and no separate domain: every
+# rule the filter needs is a rule on `netd`.
+
+# Traversal: /data -> /data/misc -> /data/misc/nullroute are all system_data_file.
+# `search` on a dir is not `write` on anything, so this does not come near
+#   neverallow netd { app_data_file_type system_data_file }:dir_file_class_set write;
+allow netd system_data_file:dir search;
+
+# The index. READ ONLY, and that asymmetry is deliberate: netd must never be
+# able to modify the artefact whose contents decide what the device can resolve.
+# `map` is what makes mmap(PROT_READ) work; without it open() succeeds, mmap()
+# returns EACCES, NrMap falls open, and the device looks healthy while blocking
+# nothing. That is the second-riskiest failure in the whole project (SPEC.md
+# §10.7) and this one word is the whole fix.
+allow netd nullroute_index_file:dir  { search getattr };
+allow netd nullroute_index_file:file { open read getattr map };
+
+# The control page. 128 KiB, MAP_SHARED, PROT_READ|PROT_WRITE: cache line 0 is
+# app-written and resolver-read (mode, response_mode, want_generation), lines
+# 1-2 are resolver-written and app-read (mapped_generation, counters,
+# filter_abi), and uid_policy at offset 4096 is app-written. A shared writable
+# mapping needs read + write + map, all three.
+allow netd nullroute_ctl_file:dir  { search getattr };
+allow netd nullroute_ctl_file:file { open read write getattr map lock };
+
+# The MPSC log ring. netd is the producer. Logging is best-effort and never
+# blocks a lookup — if this mapping fails, filtering continues and the drop is
+# counted — but the grant has to be here or every device silently loses its
+# query log.
+allow netd nullroute_log_file:dir  { search getattr };
+allow netd nullroute_log_file:file { open read write getattr map lock };
+
+# NOT GRANTED, and it must stay that way: netd has no access whatsoever to
+# nullroute_data_file (/data/misc/nullroute/priv). That directory holds the
+# user's own allow/deny rules, the fetched source cache and the profile
+# overlays. None of it is needed to answer a DNS query — the compiled index is —
+# so netd does not get to read it.
+
+# The kill switch and the state signal.
+#   get: persist.sys.nullroute.kill, checked on a cached, rate-limited path.
+#   set: sys.nullroute.filter = ok:<gen> | nomap:<errno> | badhdr:<field> |
+#        killed | off. This is health signal #2 of three, and its whole value is
+#        that it does NOT transit the control page — a failed mmap of the
+#        control page cannot suppress it (F8).
+get_prop(netd, nullroute_prop)
+set_prop(netd, nullroute_state_prop)
+
+###############################################################################
+# THIRD RAILS — do not add these, in this file or any other
+###############################################################################
+#
+# 1. NO mounton on system_file_type.
+#      system/sepolicy/private/domain.te carries
+#        neverallow { domain -init -otapreopt_chroot }
+#            { system_file_type vendor_file_type }:dir_file_class_set mounton;
+#      Only init may bind-mount over /system/etc/hosts, and
+#      sepolicy_tests.py::TestSystemTypeViolations forbids relabelling the
+#      target to escape it. Any rule of the form
+#        allow <anything> system_file_type:file mounton;
+#      fails the neverallow check, and if it somehow shipped it would fail CTS.
+#      It is also pointless: the hosts-file layer is a build-time prebuilt (L0)
+#      and the authoritative ruleset is the /data-resident index (L1). There is
+#      nothing to gain by mounting over anything.
+#
+# 2. NO dnsresolver_service:service_manager find.
+#      IDnsResolver is neverallow-guarded for exactly the domains we would want
+#      it from, and setResolverConfiguration() is behind
+#      PERM_NETWORK_STACK / PERM_MAINLINE_NETWORK_STACK anyway
+#      (DnsResolverService.cpp, ENFORCE_NETWORK_STACK_PERMISSIONS). Nothing in
+#      this design calls it: the resolver's customizedTable is exact-match only,
+#      per-netId, cleared on every setResolverConfiguration(), and AOSP's own
+#      doc comment says it "is not an effective domain blocking mechanism".
+#      The consequence we accept instead is that we cannot call
+#      flushNetworkCache() after an un-block — which is why every "Allow" action
+#      in the UI also offers "Force stop app" (SPEC.md §3.5). Do not try to buy
+#      that back with a service_manager grant; it will not pass CTS.
+#
+# 3. NO grant of nullroute_index_file to appdomain.
+#      It would close the ANDROID_DNS_MODE=local bypass for a handful of
+#      processes, and it plausibly trips a CTS neverallow on untrusted-app reads
+#      of core_data_file_type. Those processes fail open, and that is documented
+#      in SPEC.md §10.4 rather than papered over.

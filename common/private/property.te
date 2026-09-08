@@ -13,3 +13,36 @@ system_internal_prop(recovery_update_prop)
 
 # Global cleartext feature
 system_restricted_prop(system_exported_cleartext_prop);
+
+# Nullroute — property type declarations.
+#
+# Appended from packages/apps/Nullroute/rom/sepolicy/property.frag.
+#
+# These are the ONLY declarations of these two types. Do not repeat them in
+# nullroute.te — declaring a property type twice fails the policy build.
+#
+# system_restricted_prop is the right macro here rather than
+# system_internal_prop or system_public_prop:
+#
+#   * writes are gated by the explicit set_prop() calls in nullroute.te,
+#     nullroute_app.te, nullroute_seed.te and nrctl.te, and nowhere else;
+#   * reads are limited to coredomain. netd, nullroute_app, nullroute_seed and
+#     shell are all coredomains. Nothing on the vendor side has any business
+#     learning whether this device filters DNS, and sys.nullroute.filter in
+#     particular would tell a vendor blob exactly when the filter is down.
+#
+# In the AOSP macro set these calls declare the type as well as attaching the
+# attribute (system/sepolicy/public/te_macros). If this tree's macros only set
+# the attribute, add the two `type ... , property_type;` lines above the calls;
+# the build failure is immediate and names the missing type.
+#
+# nullroute_prop        persist.sys.nullroute.*  — mode, kill, fail_streak, deep
+# nullroute_state_prop  sys.nullroute.*          — filter (netd), seed (seeder)
+#
+# The split matters: persist.* is user/app-authored configuration, sys.* is
+# machine-authored health telemetry that only netd and the seeder may write.
+# Keeping them as two types is what stops the app from being able to forge the
+# very signal it is supposed to be checking (F8).
+
+system_restricted_prop(nullroute_prop)
+system_restricted_prop(nullroute_state_prop)

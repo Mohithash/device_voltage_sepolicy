@@ -1,0 +1,74 @@
+# Nullroute — the boot seeder domain.
+#
+# Placed from packages/apps/Nullroute/rom/sepolicy/nullroute_seed.te.
+#
+# nullroute_seed runs once per boot at post-fs-data, in class core, before netd.
+# Its whole job is to make sure that by the time the first DNS query arrives:
+#
+#   * control.bin and ring.bin EXIST, at the right size, mode 0660 and owned
+#     system:misc. netd runs as root and would otherwise create them root-owned,
+#     leaving the app permanently unable to write the control page — F1 by
+#     another route.
+#   * current.nrdx is either a blob whose sha256 matches its header, or absent.
+#     A half-written index is worse than none: none falls open.
+#   * on the first boot after a flash or OTA, the baked
+#     /system_ext/etc/nullroute/baseline.domains.xz has been compiled into a
+#     real index, so a device with no network still filters.
+#   * the boot-loop breaker is armed: persist.sys.nullroute.fail_streak is
+#     incremented here and cleared by the app after 120 s of healthy uptime. At
+#     3 the seeder quarantines current.nrdx and sets kill=1, so the third
+#     consecutive bad boot comes up clean (F7).
+
+type nullroute_seed, domain, coredomain;
+type nullroute_seed_exec, exec_type, file_type, system_file_type;
+
+init_daemon_domain(nullroute_seed)
+
+# /system_ext/etc/nullroute/* — the baked baseline, the never-block floor and
+# the profile files.
+allow nullroute_seed system_file_type:dir  r_dir_perms;
+allow nullroute_seed system_file_type:file r_file_perms;
+
+# /data -> /data/misc traversal. The four state dirs below already exist, made
+# by init's mkdir at post-fs-data with the labels from file_contexts.
+allow nullroute_seed system_data_file:dir search;
+
+# Full create/write on all four types. The seeder is the only component that
+# legitimately writes across the whole state root: it pre-creates the ctl and
+# log files, writes the first index, and quarantines a bad one.
+#
+# The file permissions are written out longhand rather than as create_file_perms
+# so that `map` is literally present on the rule. F1 was an invisible omission
+# of exactly this permission, and it should be greppable. (Do not fold the macro
+# into a brace set — checkpolicy does not take nested permission sets.)
+allow nullroute_seed { nullroute_index_file nullroute_ctl_file
+                       nullroute_log_file nullroute_data_file }:dir  create_dir_perms;
+allow nullroute_seed { nullroute_index_file nullroute_ctl_file
+                       nullroute_log_file nullroute_data_file }:file
+    { create open read write append getattr setattr map lock ioctl rename unlink };
+
+# The syncprop service in init.nullroute.rc runs /system_ext/bin/nrctl with an
+# explicit `seclabel u:r:nullroute_seed:s0`. That path needs all three halves of
+# an exec transition — init may exec the file, init may transition to this
+# domain, and this domain may be entered through nrctl_exec — which is exactly
+# what domain_trans() writes. An `entrypoint` allow on its own is not enough and
+# fails at execve() with a denial on init, not on us.
+#
+# There is no type_transition here on purpose: nrctl_exec must NOT automatically
+# put a shell into this domain. `adb shell nrctl status` stays in the shell
+# domain and reads the files directly (rom/sepolicy/nrctl.te).
+#
+# Reusing the seeder's domain rather than minting a third one is deliberate: the
+# work is a single byte written into control.bin, and this domain already holds
+# exactly that grant and nothing more.
+domain_trans(init, nrctl_exec, nullroute_seed)
+
+# persist.sys.nullroute.{mode,kill,fail_streak} — read to honour the kill switch
+# and the previous boot's streak, written to arm the next one.
+set_prop(nullroute_seed, nullroute_prop)
+get_prop(nullroute_seed, nullroute_prop)
+
+# sys.nullroute.seed = ok | recompiled | quarantined:<reason> | failed:<errno>.
+# The app surfaces this in Diagnostics; it is how a first-boot compile failure
+# becomes visible instead of looking like "no rules yet".
+set_prop(nullroute_seed, nullroute_state_prop)

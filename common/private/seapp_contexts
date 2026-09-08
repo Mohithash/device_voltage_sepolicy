@@ -4,3 +4,40 @@ user=_app isPrivApp=true seinfo=mediashell domain=mediashell_app name=com.google
 
 # Updater
 user=_app isPrivApp=true seinfo=platform name=com.bestrom.updater domain=updater_app type=app_data_file levelFrom=user
+
+# Nullroute — seapp_contexts fragment.
+#
+# Appended from packages/apps/Nullroute/rom/sepolicy/seapp_contexts.frag.
+#
+# ⚠ ORDER IS PART OF THE CONTRACT.
+#
+# This line MUST be inserted BEFORE any broader `isPrivApp=true` catch-all in
+# the file it is merged into. If a catch-all such as
+#
+#     user=_app isPrivApp=true domain=priv_app type=privapp_data_file levelFrom=all
+#
+# is evaluated first, the app lands in priv_app, every nullroute_* grant in
+# nullroute_app.te applies to a domain the app is never in, and the result is a
+# device where the UI works, the index builds, the promotion succeeds, and netd
+# blocks nothing — with no denial to explain why, because priv_app is simply not
+# a domain that appears in any of our rules.
+#
+# Modern libselinux does sort entries by specificity (a `name=` match outranks a
+# catch-all regardless of file position), so on most trees this would work
+# either way. Treat that as a safety net, not as permission to be careless:
+# the sort comparator has changed across releases, and there is no runtime
+# signal when it goes wrong.
+#
+# VERIFY AFTER A BUILD:
+#   adb shell ps -AZ | grep com.bestrom.nullroute
+# must show u:r:nullroute_app:s0, not u:r:priv_app:s0.
+# tools/ci_verify_image.sh asserts the ordering on the built image.
+#
+# A platform-signed app gets seinfo=platform automatically from
+# mac_permissions.xml's default platform <signer> block. No new <signer> entry
+# and no mac_permissions.xml edit is required.
+#
+# One line only: seapp_contexts matches on the PACKAGE name, so every process of
+# the package — including any `:remote` process — resolves through this entry.
+
+user=_app isPrivApp=true seinfo=platform name=com.bestrom.nullroute domain=nullroute_app type=privapp_data_file levelFrom=all
