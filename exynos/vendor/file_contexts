@@ -1,3 +1,2 @@
-# LiveDisplay HAL
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay-service\.samsung-exynos    u:object_r:hal_bestrom_livedisplay_exynos_exec:s0
+# LiveDisplay HAL — bestrom path only
 /(vendor|system/vendor)/bin/hw/vendor\.bestrom\.livedisplay-service\.samsung-exynos    u:object_r:hal_bestrom_livedisplay_exynos_exec:s0

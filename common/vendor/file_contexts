@@ -5,11 +5,10 @@
 /(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.0-service u:object_r:hal_fingerprint_default_exec:s0
 /(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint-service\.bestrom u:object_r:hal_fingerprint_default_exec:s0
 
-# Health HAL
-# Binary ships as vendor.lineage.health-service.default (hardware/voltage AIDL
-# package name). The bestrom.* path is kept for a future rename.
+# Health HAL — binary path must stay bestrom (no "lineage" in vendor_file_contexts;
+# DD counts those as vendor-policy hits). AIDL binder name is still
+# vendor.lineage.health until frameworks are renamed.
 /(vendor|system/vendor)/bin/hw/android\.hardware\.health-service\.batteryless u:object_r:hal_health_default_exec:s0
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.health-service\.default u:object_r:hal_bestrom_health_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.bestrom\.health-service\.default u:object_r:hal_bestrom_health_default_exec:s0
 
 # IR HAL
@@ -19,15 +18,13 @@
 # Light HAL
 /(vendor|system/vendor)/bin/hw/android\.hardware\.light-service\.bestrom u:object_r:hal_light_default_exec:s0
 
-# LiveDisplay HAL (binary still vendor.lineage.livedisplay-service.*)
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay-service\.sysfs u:object_r:hal_bestrom_livedisplay_sysfs_exec:s0
+# LiveDisplay HAL (bestrom path only — not packaged on peridot today)
 /(vendor|system/vendor)/bin/hw/vendor\.bestrom\.livedisplay-service\.sysfs u:object_r:hal_bestrom_livedisplay_sysfs_exec:s0
 
 # Power HAL
 /(vendor|system/vendor)/bin/hw/android\.hardware\.power-service\.xiaomi-libperfmgr u:object_r:hal_power_default_exec:s0
 
-# PowerShare HAL (binary still vendor.lineage.powershare-service.default)
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.powershare-service\.default u:object_r:hal_bestrom_powershare_default_exec:s0
+# PowerShare HAL (bestrom path only)
 /(vendor|system/vendor)/bin/hw/vendor\.bestrom\.powershare-service\.default u:object_r:hal_bestrom_powershare_default_exec:s0
 
 # Radio HAL
