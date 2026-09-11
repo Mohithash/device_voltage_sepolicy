@@ -1,5 +1,27 @@
+# AIDL package names must match what the HAL registers and what frameworks/
+# imports. Voltage renamed SELinux types to hal_bestrom_*, but several HALs
+# still ship as vendor.lineage.* — both names are listed so add/find works.
+#
+# health:      framework + binary = lineage.*  (bestrom.* kept for rename)
+# livedisplay: framework + binary = lineage.*
+# powershare:  framework + binary = lineage.*
+# touch:       framework + binary = bestrom.*  (fully renamed)
+
+vendor.lineage.health.IChargingControl/default                 u:object_r:hal_bestrom_health_service:s0
+vendor.lineage.health.IFastCharge/default                      u:object_r:hal_bestrom_health_service:s0
 vendor.bestrom.health.IChargingControl/default                 u:object_r:hal_bestrom_health_service:s0
 vendor.bestrom.health.IFastCharge/default                      u:object_r:hal_bestrom_health_service:s0
+
+vendor.lineage.livedisplay.IAdaptiveBacklight/default          u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IAntiFlicker/default                u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IAutoContrast/default               u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IColorBalance/default               u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IColorEnhancement/default           u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IDisplayColorCalibration/default    u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IDisplayModes/default               u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IPictureAdjustment/default          u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.IReadingEnhancement/default         u:object_r:hal_bestrom_livedisplay_service:s0
+vendor.lineage.livedisplay.ISunlightEnhancement/default        u:object_r:hal_bestrom_livedisplay_service:s0
 vendor.bestrom.livedisplay.IAdaptiveBacklight/default          u:object_r:hal_bestrom_livedisplay_service:s0
 vendor.bestrom.livedisplay.IAntiFlicker/default                u:object_r:hal_bestrom_livedisplay_service:s0
 vendor.bestrom.livedisplay.IAutoContrast/default               u:object_r:hal_bestrom_livedisplay_service:s0
@@ -10,7 +32,10 @@ vendor.bestrom.livedisplay.IDisplayModes/default               u:object_r:hal_be
 vendor.bestrom.livedisplay.IPictureAdjustment/default          u:object_r:hal_bestrom_livedisplay_service:s0
 vendor.bestrom.livedisplay.IReadingEnhancement/default         u:object_r:hal_bestrom_livedisplay_service:s0
 vendor.bestrom.livedisplay.ISunlightEnhancement/default        u:object_r:hal_bestrom_livedisplay_service:s0
+
+vendor.lineage.powershare.IPowerShare/default                  u:object_r:hal_bestrom_powershare_service:s0
 vendor.bestrom.powershare.IPowerShare/default                  u:object_r:hal_bestrom_powershare_service:s0
+
 vendor.bestrom.touch.IGloveMode/default                        u:object_r:hal_bestrom_touch_service:s0
 vendor.bestrom.touch.IHighTouchPollingRate/default             u:object_r:hal_bestrom_touch_service:s0
 vendor.bestrom.touch.IKeyDisabler/default                      u:object_r:hal_bestrom_touch_service:s0

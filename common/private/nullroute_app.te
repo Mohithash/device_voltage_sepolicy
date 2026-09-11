@@ -76,7 +76,12 @@ allow nullroute_app nullroute_log_file:file { open read getattr map };
 # priv/ — the user's own rules, profile overlays and the fetched source cache.
 # netd has no access to this type at all; nothing here is needed to answer a
 # DNS query.
-allow nullroute_app nullroute_data_file:dir  { search open read getattr write add_name remove_name };
+#
+# create_dir_perms (not just add_name) is required: IndexBuilder mkdirs
+# priv/build and priv/cache on every Update. add_name alone lets the parent
+# receive a name but the new dir create is denied → "Could not create
+# …/priv/build".
+allow nullroute_app nullroute_data_file:dir create_dir_perms;
 allow nullroute_app nullroute_data_file:file { create open read write getattr setattr map lock rename unlink };
 
 ###############################################################################

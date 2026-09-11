@@ -72,3 +72,8 @@ get_prop(nullroute_seed, nullroute_prop)
 # The app surfaces this in Diagnostics; it is how a first-boot compile failure
 # becomes visible instead of looking like "no rules yet".
 set_prop(nullroute_seed, nullroute_state_prop)
+
+# Wait edge for load_persist_props(). Without this the seeder AVCs on
+# ro.persistent_properties.ready, times out, and reports seed=…+noprops —
+# which leaves L1 dead until the next successful compile.
+get_prop(nullroute_seed, persistent_properties_ready_prop)
